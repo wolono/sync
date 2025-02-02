@@ -1,0 +1,42 @@
+name: Nvm同步
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 每日UTC时间0点自动执行
+  workflow_dispatch:      # 支持手动触发
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 镜像克隆上游仓库
+        run: git clone --mirror https://github.com/nvm-sh/nvm.git upstream-repo
+
+      - name: 配置目标仓库远程
+        run: |
+          cd upstream-repo
+          git remote add target https://${{ secrets.ATOMGIT_NAME }}:${{ secrets.ATOMGIT_PASSWORD }}@atomgit.com/nvm-sh/nvm.git
+
+      - name: 配置Git身份
+        run: |
+          cd upstream-repo
+          git config user.name "${{ secrets.GIT_NAME }}"
+          git config user.email "${{ secrets.GIT_EMAIL }}"
+
+      - name: 同步所有分支
+        run: |
+          cd upstream-repo
+          # 同步所有分支（包含新建分支）
+          git push target --force --all
+
+      - name: 同步所有标签
+        run: |
+          cd upstream-repo
+          # 同步所有标签（包含新建标签）
+          git push target --force --tags
+
+      - name: 清理残留引用
+        run: |
+          cd upstream-repo
+          # 删除目标仓库已不存在的远程分支
+          git push target --force --prune
