@@ -29,10 +29,10 @@ jobs:
           - name: insights
             upstream: https://github.com/frappe/insights.git
             downstream: https://atomgit.com/frappe/insights.git
-          - name: insights
+          - name: air-datepicker
             upstream: https://github.com/frappe/air-datepicker.git
             downstream: https://atomgit.com/frappe/air-datepicker.git
-          - name: insights
+          - name: gunicorn
             upstream: https://github.com/frappe/gunicorn.git
             downstream: https://atomgit.com/frappe/gunicorn.git
 
@@ -52,9 +52,9 @@ jobs:
         downstream_url="${{ matrix.repos.downstream }}"
         git remote add downstream "https://${{ secrets.ATOMGIT_USERNAME }}:${{ secrets.ATOMGIT_TOKEN }}@${downstream_url#https://}"
         
-        # 强制推送镜像
+        # 强制推送镜像（排除 notes 引用）
         retry_count=0
-        until git push --force downstream --mirror || [ $retry_count -eq 2 ]
+        until git push --force downstream --mirror :^refs/notes/* || [ $retry_count -eq 2 ]
         do
           retry_count=$((retry_count + 1))
           echo "::warning::第 $retry_count 次重试..."
