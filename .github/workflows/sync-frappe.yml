@@ -50,8 +50,19 @@ jobs:
         # 配置下游地址
         cd "${{ matrix.repos.name }}-bare"
         downstream_url="${{ matrix.repos.downstream }}"
-        git remote add downstream "https://${{ secrets.ATOMGIT_USERNAME }}:${{ secrets.ATOMGIT_TOKEN }}@${downstream_url#https://}"
+        auth_downstream_url="https://${{ secrets.ATOMGIT_USERNAME }}:${{ secrets.ATOMGIT_TOKEN }}@${downstream_url#https://}"
+        git remote add downstream "$auth_downstream_url"
+
+        # 获取最新提交ID
+        upstream_head=$(git rev-parse HEAD)
+        downstream_head=$(git ls-remote "$auth_downstream_url" HEAD | awk '{print $1}')
         
+        # 比对提交ID
+        if [ "$upstream_head" = "$downstream_head" ]; then
+          echo "::notice::仓库 ${{ matrix.repos.name }} 已同步，跳过推送"
+          exit 0
+        fi
+
         # 强制推送镜像（排除 notes 引用）
         retry_count=0
         until git push --force downstream --mirror :^refs/notes/* || [ $retry_count -eq 2 ]
