@@ -1,0 +1,59 @@
+name: 同步Frappe官方镜像
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  mirror-sync:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        repos:
+          - name: frappe
+            upstream: https://github.com/frappe/frappe.git
+            downstream: https://atomgit.com/frappe/frappe.git
+          - name: erpnext
+            upstream: https://github.com/frappe/erpnext.git
+            downstream: https://atomgit.com/frappe/erpnext.git
+          - name: hrms
+            upstream: https://github.com/frappe/hrms.git
+            downstream: https://atomgit.com/frappe/hrms.git
+          - name: crm
+            upstream: https://github.com/frappe/crm.git
+            downstream: https://atomgit.com/frappe/crm.git
+          - name: wiki
+            upstream: https://github.com/frappe/wiki.git
+            downstream: https://atomgit.com/frappe/wiki.git
+          - name: insights
+            upstream: https://github.com/frappe/insights.git
+            downstream: https://atomgit.com/frappe/insights.git
+
+    steps:
+    - name: 配置Git
+      run: |
+        git config --global user.email "71954466@qq.com"
+        git config --global user.name "wolone"
+
+    - name: 镜像同步
+      run: |
+        # 克隆上游仓库
+        git clone --mirror "${{ matrix.repos.upstream }}" "${{ matrix.repos.name }}-bare"
+        
+        # 配置下游地址
+        cd "${{ matrix.repos.name }}-bare"
+        downstream_url="${{ matrix.repos.downstream }}"
+        git remote add downstream "https://${{ secrets.ATOMGIT_USERNAME }}:${{ secrets.ATOMGIT_TOKEN }}@${downstream_url#https://}"
+        
+        # 强制推送镜像
+        retry_count=0
+        until git push --force downstream --mirror || [ $retry_count -eq 2 ]
+        do
+          retry_count=$((retry_count + 1))
+          echo "::warning::第 $retry_count 次重试..."
+          sleep 10
+        done
+        
+        # 清理
+        cd .. && rm -rf "${{ matrix.repos.name }}-bare"
