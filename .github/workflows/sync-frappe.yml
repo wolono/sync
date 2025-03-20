@@ -65,7 +65,7 @@ jobs:
 
         # 强制推送镜像（排除 notes 引用）
         retry_count=0
-        until git push --force downstream --mirror :^refs/notes/* || [ $retry_count -eq 2 ]
+        until git push --force downstream --all && git push --force downstream --tags || [ $retry_count -eq 2 ]
         do
           retry_count=$((retry_count + 1))
           echo "::warning::第 $retry_count 次重试..."
