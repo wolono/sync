@@ -29,6 +29,12 @@ jobs:
           - name: insights
             upstream: https://github.com/frappe/insights.git
             downstream: https://atomgit.com/frappe/insights.git
+          - name: insights
+            upstream: https://github.com/frappe/air-datepicker.git
+            downstream: https://atomgit.com/frappe/air-datepicker.git
+          - name: insights
+            upstream: https://github.com/frappe/gunicorn.git
+            downstream: https://atomgit.com/frappe/gunicorn.git
 
     steps:
     - name: 配置Git
