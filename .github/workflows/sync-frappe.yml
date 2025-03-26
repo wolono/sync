@@ -35,6 +35,9 @@ jobs:
           - name: gunicorn
             upstream: https://github.com/frappe/gunicorn.git
             downstream: https://atomgit.com/frappe/gunicorn.git
+          - name: bench
+            upstream: https://github.com/frappe/bench.git
+            downstream: https://atomgit.com/frappe/bench.git
 
     steps:
     - name: 配置Git
