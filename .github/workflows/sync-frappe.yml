@@ -38,6 +38,9 @@ jobs:
           - name: bench
             upstream: https://github.com/frappe/bench.git
             downstream: https://atomgit.com/frappe/bench.git
+          - name: pypika
+            upstream: https://github.com/frappe/pypika.git
+            downstream: https://atomgit.com/frappe/pypika.git
 
     steps:
     - name: 配置Git
