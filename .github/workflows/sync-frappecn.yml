@@ -1,0 +1,65 @@
+name: 同步Frappecn镜像
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  mirror-sync:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        repos:
+          - name: frappe
+            upstream: https://github.com/frappecn/frappe.git
+            downstream: https://atomgit.com/frappecn/frappe.git
+          - name: erpnext
+            upstream: https://github.com/frappecn/erpnext.git
+            downstream: https://atomgit.com/frappecn/erpnext.git
+          - name: hrms
+            upstream: https://github.com/frappecn/hrms.git
+            downstream: https://atomgit.com/frappecn/hrms.git
+          - name: crm
+            upstream: https://github.com/frappecn/crm.git
+            downstream: https://atomgit.com/frappecn/crm.git
+          - name: bench
+            upstream: https://github.com/frappecn/bench.git
+    steps:
+    - name: 配置Git
+      run: |
+        git config --global user.email "71954466@qq.com"
+        git config --global user.name "wolone"
+
+    - name: 镜像同步
+      run: |
+        # 克隆上游仓库
+        git clone --mirror "${{ matrix.repos.upstream }}" "${{ matrix.repos.name }}-bare"
+        
+        # 配置下游地址
+        cd "${{ matrix.repos.name }}-bare"
+        downstream_url="${{ matrix.repos.downstream }}"
+        auth_downstream_url="https://${{ secrets.ATOMGIT_USERNAME }}:${{ secrets.ATOMGIT_TOKEN }}@${downstream_url#https://}"
+        git remote add downstream "$auth_downstream_url"
+
+        # 获取最新提交ID
+        upstream_head=$(git rev-parse HEAD)
+        downstream_head=$(git ls-remote "$auth_downstream_url" HEAD | awk '{print $1}')
+        
+        # 比对提交ID
+        if [ "$upstream_head" = "$downstream_head" ]; then
+          echo "::notice::仓库 ${{ matrix.repos.name }} 已同步，跳过推送"
+          exit 0
+        fi
+
+        # 强制推送镜像（排除 notes 引用）
+        retry_count=0
+        until git push --force downstream --all && git push --force downstream --tags || [ $retry_count -eq 2 ]
+        do
+          retry_count=$((retry_count + 1))
+          echo "::warning::第 $retry_count 次重试..."
+          sleep 10
+        done
+        
+        # 清理
+        cd .. && rm -rf "${{ matrix.repos.name }}-bare"

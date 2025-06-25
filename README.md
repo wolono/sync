@@ -26,3 +26,33 @@
 2. **认证配置**：通过GitHub Secrets注入AtomGit账号凭据
 3. **强制同步**：使用`git push --force --mirror`覆盖式同步
 4. **错误重试**：失败时自动重试2次，间隔10秒
+
+# Frappecn 镜像同步
+
+本项目用于自动同步 Frappecn 相关仓库至 AtomGit 镜像，使用 GitHub Actions 实现定时与手动触发。
+
+## 工作流说明
+
+- 工作流文件：`.github/workflows/sync-frappecn.yml`
+- 功能：定时（每天零点）或手动同步以下仓库的主仓库与 AtomGit 镜像仓库。
+- 当前同步仓库列表：
+  - frappecn/frappe
+  - frappecn/erpnext
+  - frappecn/hrms
+  - frappecn/crm
+  - frappecn/bench
+
+## 使用方法
+
+1. 配置仓库 Secrets：
+   - `ATOMGIT_USERNAME`：AtomGit 用户名
+   - `ATOMGIT_TOKEN`：AtomGit 访问 Token
+
+2. 工作流会自动比对上游与下游仓库的最新提交，如已同步则跳过，否则强制推送所有分支与标签。
+
+3. 支持重试机制，最多重试 2 次。
+
+## 注意事项
+
+- 仅同步主分支及所有标签，不包含 notes 引用。
+- 推送后自动清理临时目录。
